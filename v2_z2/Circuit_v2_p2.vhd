@@ -11,6 +11,12 @@ end Circuit_v2_p2;
 
 architecture Behavioral of Circuit_v2_p2 is
 
+component Generic_LUT is
+    Generic(init : std_logic_vector(15 downto 0) := std_logic_vector(to_unsigned(12, 16)));
+    Port(a_i : in std_logic_vector(3 downto 0);
+         b_o : out std_logic);
+end component;
+
 -- MUX --
 signal mux_i : std_logic_vector(7 downto 0);
 signal sel_i : std_logic_vector(2 downto 0);
@@ -59,19 +65,19 @@ lut4 <= '0' & lut_o_2 & lut_o_1 & lut_o_3;
 d_2 <= lut_o_4;
 o2 <= q_2;
 
-LUT_1: entity work.Generic_LUT(Behavioral)
+LUT_1: Generic_LUT
 generic map(init => "0101001101010000")
 port map(a_i => lut1, b_o =>lut_o_1);
 
-LUT_2: entity work.Generic_LUT(Behavioral)
+LUT_2: Generic_LUT
 generic map(init => "0000100000000000")
 port map(a_i => lut2, b_o =>lut_o_2);
 
-LUT_3: entity work.Generic_LUT(Behavioral)
+LUT_3: Generic_LUT
 generic map(init => "0000010000000000")
 port map(a_i => lut3, b_o =>lut_o_3);
 
-LUT_4: entity work.Generic_LUT(Behavioral)
+LUT_4: Generic_LUT
 generic map(init => "1111111111111110")
 port map(a_i => lut4, b_o =>lut_o_4);
 

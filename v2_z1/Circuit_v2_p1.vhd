@@ -20,6 +20,17 @@ end Circuit_v2_p1;
 
 architecture Behavioral of Circuit_v2_p1 is
 
+component lut3 is
+ generic(INIT : std_logic_vector(7 downto 0));
+ port(
+     I2 : in std_logic;
+     I1 : in std_logic;
+     I0 : in std_logic;
+     O : out std_logic
+ );
+
+end component;
+
 signal lut1_6, lut2_6, lut3_5, lut4_5, lut5_6 : std_logic;
 signal out1_reg, out1_next : std_logic;
 signal out2_reg, out2_next : std_logic;
@@ -42,7 +53,7 @@ reg_proc : process(clk, rst)
  out2 <= out2_reg;
  out1_next <= not (not (not (not (b) and not (c) and not (g and b) and (not (g and h))) and a) and not (d and e and f));
  
- look_up_table_1 : entity work.lut3
+ look_up_table_1 : lut3
  generic map(INIT => "11100000")
  port map(
          I0 => c,
@@ -50,7 +61,7 @@ reg_proc : process(clk, rst)
          I2 => a,
          O => lut1_6);
          
- look_up_table_2 : entity work.lut3
+ look_up_table_2 : lut3
  generic map(INIT => "10000000")
  port map(
          I0 => f,
@@ -58,7 +69,7 @@ reg_proc : process(clk, rst)
          I2 => d,
          O => lut2_6);
          
- look_up_table_3 : entity work.lut3
+ look_up_table_3 : lut3
  generic map(INIT => "10000000")
  port map(
          I0 => b,
@@ -66,7 +77,7 @@ reg_proc : process(clk, rst)
          I2 => a,
          O => lut3_5);
  
- look_up_table_4 : entity work.lut3
+ look_up_table_4 : lut3
  generic map(INIT => "10000000")
  port map(
          I0 => h,
@@ -74,7 +85,7 @@ reg_proc : process(clk, rst)
          I2 => a,
          O => lut4_5);
          
- look_up_table_5 : entity work.lut3
+ look_up_table_5 : lut3
  generic map(INIT => "11111110")
  port map(
          I0 => lut4_5,
@@ -82,7 +93,7 @@ reg_proc : process(clk, rst)
          I2 => '0',
          O => lut5_6);
          
- look_up_table_6 : entity work.lut3
+ look_up_table_6 : lut3
  generic map(INIT => "11111110")
  port map(
          I0 => lut5_6,

@@ -10,6 +10,13 @@ end Circuit_v1_p2;
 
 architecture Behavioral of Circuit_v1_p2 is
 
+component generic_dec is
+    Generic(width : natural := 2);
+    Port(en_i : in std_logic;
+         a_i : in std_logic_vector(width - 1 downto 0);
+         b_o : out std_logic_vector(2 ** width - 1 downto 0));
+end component;
+
 -- MUX --
 signal mux_o : std_logic;
 signal mux_i : std_logic_vector(15 downto 0);
@@ -54,13 +61,13 @@ end process;
 mux_o <= mux_i(to_integer(unsigned(sel_i)));
 
 -- DEC --
-DEC_1 : entity work.generic_dec(Behavioral)
+DEC_1: generic_dec
 generic map(width => 2)
 port map(a_i => dec_in_1, 
          en_i => '1',
          b_o => mux_i(3 downto 0));
          
-DEC_2 : entity work.generic_dec(Behavioral)
+DEC_2: generic_dec
 generic map(width => 2)
 port map(a_i => dec_in_2, 
          en_i => '1',
