@@ -9,8 +9,8 @@ module top(
 	 input logic f,
 	 input logic g,
 	 input logic h,
-	 output logic o1,
-     output logic o2
+	 output logic out1,
+     output logic out2
 );
 	Circuit_v2_p1 uufv
 	  (
@@ -24,11 +24,11 @@ module top(
 	   .f(f),
 	   .g(g),
 	   .h(h),
-	   .o1(o1),
-	   .o2(o2));
+	   .out1(out1),
+	   .out2(out2));
 
 	property p1;
-		@(posedge clk) o1 == o2;
+		@(posedge clk) out1 == out2;
 	endproperty
 
 	assert property (p1);
