@@ -24,7 +24,7 @@ module top(
 	   .o2(o2));
 
 	property p1;
-		@(posedge clk) o1 == o2;
+		@(posedge clk_i) o1 == o2;
 	endproperty
 
 	assert property (p1);
