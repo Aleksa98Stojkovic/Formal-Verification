@@ -81,7 +81,7 @@ always_comb begin
 end
 
 // Tag memory implementation
-Memory #(.addr_width(index_width), .data_width(4 * tag_width)) 
+Memory #(.addr_width(index_width), .data_width(4 * tag_width), .init_zero(0)) 
     Tag_Memory(
                .clk(clk_i), 
                .write_en(0), 
@@ -91,7 +91,7 @@ Memory #(.addr_width(index_width), .data_width(4 * tag_width))
                .rdata(tag_data));
                
 // LRU memory
-Memory #(.addr_width(index_width), .data_width(16)) 
+Memory #(.addr_width(index_width), .data_width(16), .init_zero(1)) 
     LRU_Memory(
                .clk(clk_i), 
                .write_en(write_en), 
