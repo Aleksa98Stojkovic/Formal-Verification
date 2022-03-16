@@ -34,6 +34,9 @@ logic [index_width - 1 : 0] waddr;
 logic write_en;
 logic [15 : 0] wdata;
 
+// LRU register
+logic [15 : 0] LRU_reg, LRU_next;
+
 // Mux
 logic [index_width - 1 : 0] mux; 
 logic sel;
@@ -59,6 +62,8 @@ assign or_gate = ((comp_reg[0] | comp_reg[1]) | (comp_reg[2] | comp_reg[3]));
 assign col_o = dec;
 assign hit_miss_o = or_gate;
 assign waddr = index_reg;
+assign LRU_next = wdata;
+assign lru_data = LRU_reg; 
 
 // Registers
 always_ff@(posedge clk_i) begin
@@ -66,11 +71,13 @@ always_ff@(posedge clk_i) begin
         comp_reg <= 0;
         tag_reg <= 0;
         index_reg <= 0;
+	LRU_reg <= 0;
     end
     else begin
         comp_reg <= comp_next;
         tag_reg <= tag_next;
         index_reg <= index_next;
+	if(write_en) LRU_reg <= LRU_next;
     end
 end
 
@@ -84,12 +91,13 @@ end
 Memory #(.addr_width(index_width), .data_width(4 * tag_width), .init_zero(0)) 
     Tag_Memory(
                .clk(clk_i), 
-               .write_en(0), 
+               .write_en(1'(0)), 
                .raddr(index_i), 
-               .waddr(0), 
-               .wdata(0), 
+               .waddr((index_width)'(0)), 
+               .wdata((4 * tag_width)'(0)), 
                .rdata(tag_data));
-               
+             
+/*  
 // LRU memory
 Memory #(.addr_width(index_width), .data_width(16), .init_zero(1)) 
     LRU_Memory(
@@ -98,7 +106,8 @@ Memory #(.addr_width(index_width), .data_width(16), .init_zero(1))
                .raddr(mux),
                .waddr(index_reg), 
                .wdata(wdata), 
-               .rdata(lru_data));               
+               .rdata(lru_data));
+*/               
 
 // Comparators
 always_comb begin
@@ -177,7 +186,7 @@ always_comb begin
         end
         FINISH: begin
             hm_valid_o = 1;
-            write_en = 1;
+            write_en = !(comp_reg == 0);
             next_state = (hm_ready_i == 1) ? IDLE : FINISH;
         end
         default: begin
@@ -185,5 +194,45 @@ always_comb begin
         end
     endcase
 end
+
+default clocking 
+	@(posedge clk_i);
+endclocking
+
+default disable iff (rst_i);
+
+restrict property ((tag_i < 5 * (2 ** index_width)) & (tag_i > 3));
+
+// restrict property ((lru_data[15 : 12] == 0) | (lru_data[11 : 8] == 0) | (lru_data[7 : 4] == 0) |(lru_data[3 : 0] == 0));
+// restrict property (({lru_data[15], lru_data[11], lru_data[7], lru_data[3]} == 0) | ({lru_data[14], lru_data[10], lru_data[6], lru_data[2]} == 0) |
+//		     ({lru_data[13], lru_data[9], lru_data[5], lru_data[1]} == 0) | ({lru_data[12], lru_data[8], lru_data[4], lru_data[0]} == 0));
+
+assert property ((lru_data[15 : 12] == 0) | (lru_data[11 : 8] == 0) | (lru_data[7 : 4] == 0) |(lru_data[3 : 0] == 0));
+assert property (({lru_data[15], lru_data[11], lru_data[7], lru_data[3]} == 0) | ({lru_data[14], lru_data[10], lru_data[6], lru_data[2]} == 0) |
+		({lru_data[13], lru_data[9], lru_data[5], lru_data[1]} == 0) | ({lru_data[12], lru_data[8], lru_data[4], lru_data[0]} == 0));
+
+assert property ((current_state == FINISH) & (comp_reg == 4'b0001) |=> (LRU_reg[3 : 0] == 4'b1110) & ({LRU_reg[12], LRU_reg[8], LRU_reg[4], LRU_reg[0]} == 0));
+assert property ((current_state == FINISH) & (comp_reg == 4'b0010) |=> (LRU_reg[7 : 4] == 4'b1101) & ({lru_data[13], lru_data[9], lru_data[5], lru_data[1]} == 0));
+assert property ((current_state == FINISH) & (comp_reg == 4'b0100) |=> (LRU_reg[11 : 8] == 4'b1011) & ({lru_data[14], lru_data[10], lru_data[6], lru_data[2]} == 0));
+assert property ((current_state == FINISH) & (comp_reg == 4'b1000) |=> (LRU_reg[15 : 12] == 4'b0111) & ({lru_data[15], lru_data[11], lru_data[7], lru_data[3]} == 0));
+assert property ((current_state == FINISH) & (comp_reg == 4'b0000) |=> (LRU_reg == $past(LRU_reg, 1)));
+
+cover property (comp_reg == 4'b0000);
+cover property (comp_reg == 4'b0001);
+cover property (comp_reg == 4'b0010);
+cover property (comp_reg == 4'b0100);
+cover property (comp_reg == 4'b1000);
+cover property (it_ready_o == 0);
+cover property (hit_miss_o == 1 & hm_valid_o == 1);
+cover property (hit_miss_o == 0 & hm_valid_o == 1);
+cover property (col_o == 0 & hm_valid_o == 1 & dec_valid == 1);
+cover property (col_o == 1 & hm_valid_o == 1 & dec_valid == 1);
+cover property (col_o == 2 & hm_valid_o == 1 & dec_valid == 1);
+cover property (col_o == 3 & hm_valid_o == 1 & dec_valid == 1);
+assert property ($fell(it_ready_o) |-> $past(it_valid_i, 1));
+assert property ($fell(it_ready_o) |=> $rose(hm_valid_o));
+assert property ($rose(hit_miss_o) |-> $past(comp != 0, 1));
+assert property (!hit_miss_o & $rose(hm_valid_o) |-> $past(comp == 0, 1));
+assert property (hm_valid_o & !dec_valid |-> !hit_miss_o);
     
 endmodule

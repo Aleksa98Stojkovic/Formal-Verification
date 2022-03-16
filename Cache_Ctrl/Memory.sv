@@ -9,17 +9,17 @@ module Memory
     (
         input logic clk,
         input logic write_en,
-        input logic [addr_width : 0] raddr,
-        input logic [addr_width : 0] waddr,
+        input logic [addr_width - 1 : 0] raddr,
+        input logic [addr_width - 1 : 0] waddr,
         input logic [data_width - 1 : 0] wdata,
         output logic [data_width - 1 : 0] rdata
     );
     
-typedef logic [data_width - 1 : 0] mem_tag_type [2 ** addr_width];
+typedef logic [data_width - 1 : 0] mem_data_type [2 ** addr_width];
 
 function mem_data_type init_mem_data();
 
-    mem_tag_type mem;
+    mem_data_type mem;
     for(int i = 0; i < 2 ** addr_width; i++) begin
         mem[i] = init_zero ? 0 : i + 1;
     end
