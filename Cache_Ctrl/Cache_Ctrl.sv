@@ -222,13 +222,33 @@ cover property (comp_reg == 4'b0001);
 cover property (comp_reg == 4'b0010);
 cover property (comp_reg == 4'b0100);
 cover property (comp_reg == 4'b1000);
+
 cover property (it_ready_o == 0);
+
 cover property (hit_miss_o == 1 & hm_valid_o == 1);
 cover property (hit_miss_o == 0 & hm_valid_o == 1);
+
 cover property (col_o == 0 & hm_valid_o == 1 & dec_valid == 1);
 cover property (col_o == 1 & hm_valid_o == 1 & dec_valid == 1);
 cover property (col_o == 2 & hm_valid_o == 1 & dec_valid == 1);
 cover property (col_o == 3 & hm_valid_o == 1 & dec_valid == 1);
+
+cover property (current_state == IDLE);
+cover property (current_state == CHECK);
+cover property (current_state == FINISH);
+assert property((current_state == CHECK) |=> (current_state == FINISH));
+assert property((current_state == IDLE) & it_valid_i |=> (current_state == CHECK));
+assert property((current_state == FINISH) & hm_ready_i |=> (current_state == IDLE));
+
+cover property (comp_reg == 4'b0110);
+assert property(comp_reg == 4'b0011 |-> col_o == 0);
+assert property(comp_reg == 4'b0111 |-> col_o == 0);
+assert property(comp_reg == 4'b1111 |-> col_o == 0);
+assert property(comp_reg == 4'b0110 |-> col_o == 1);
+assert property(comp_reg == 4'b1110 |-> col_o == 1);
+assert property(comp_reg == 4'b1100 |-> col_o == 2);
+
+
 assert property ($fell(it_ready_o) |-> $past(it_valid_i, 1));
 assert property ($fell(it_ready_o) |=> $rose(hm_valid_o));
 assert property ($rose(hit_miss_o) |-> $past(comp != 0, 1));
